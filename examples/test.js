@@ -5,7 +5,7 @@ rtsp.RTSP_CONFIG['websocket.url'] = "ws://127.0.0.1:9010/ws";
 
 document.addEventListener("DOMContentLoaded", function() {
     setTimeout(()=> {
-        let player = rtsp.attach(document.getElementById('test_video'));
+        let player = rtsp.attach(document.getElementById('test_video0'));
         if (!player.started()) {
             player.start();
         }

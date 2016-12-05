@@ -58,7 +58,7 @@
 
 	document.addEventListener("DOMContentLoaded", function () {
 	    setTimeout(function () {
-	        var player = rtsp.attach(document.getElementById('test_video'));
+	        var player = rtsp.attach(document.getElementById('test_video0'));
 	        if (!player.started()) {
 	            player.start();
 	        }

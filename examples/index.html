@@ -4,15 +4,11 @@
     <meta charset="UTF-8">
     <title>HTML5 RTSP player example</title>
     <style>
-        #test_video {
-        /*
-            height: 1920px;
-            width: 1080px;
-<video id="test_video" controls autoplay src="rtsp://admin:admin@192.168.0.104:554/cam/realmonitor?channel=1&subtype=0"></video>
-            */
+        #test_video0 {
             /*
             height: 1280px;
             width: 960px;
+<video id="test_video" controls autoplay src="rtsp://admin:admin@192.168.0.104:554/cam/realmonitor?channel=1&subtype=0"></video>
             */
             height: 640px;
             width: 480px;
@@ -20,8 +16,8 @@
     </style>
 </head>
 <body>
+<video id="test_video0" controls autoplay src="rtsp://admin:12345@192.168.0.11:554/Streaming/Channels/101"></video>
 <script src="test.bundle.js"></script>
-<video id="test_video" controls autoplay src="rtsp://admin:12345@192.168.0.11:554/Streaming/Channels/101"></video>
 欢迎访问HTML5 WEB
 </body>
 </html>
