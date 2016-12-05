@@ -1,7 +1,7 @@
 import {LogLevel} from 'bp_logger';
 import * as rtsp from 'rtsp/rtsp_player';
 
-rtsp.RTSP_CONFIG['websocket.url'] = "ws://127.0.0.1:8080/ws";
+rtsp.RTSP_CONFIG['websocket.url'] = "ws://127.0.0.1:9010/ws";
 
 document.addEventListener("DOMContentLoaded", function() {
     setTimeout(()=> {
