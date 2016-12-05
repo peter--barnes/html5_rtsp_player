@@ -1,0 +1,10 @@
+Source: ws-rtsp-repo
+Version: 1.3
+Maintainer: Specfogre <specfogre@gmail.com>
+License: Specforge
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+Package: ws-rtsp-repo
+Architecture: all
+Description: Proxy server for streaming RTSP over websockets
