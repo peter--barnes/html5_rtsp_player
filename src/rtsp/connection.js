@@ -1,14 +1,15 @@
-import {RTSP_CONFIG, MessageBuilder} from './../config';
+//import {RTSP_CONFIG, MessageBuilder} from './../config';
 import {Log} from 'bp_logger';
 import {WebSocketProxy} from './../util/websocket_proxy';
 import {RTSPClientSM as RTSPClient} from './client';
 import {EventEmitter} from 'bp_event';
 
 export class RTSPWebsocketBackend {
-    constructor(host, port, auth) {
+    constructor(ws_url, host, port, auth) {
         this.rtp_handler= ()=>{};
         this.response_queue=[];
 
+        this.ws_url = ws_url;
         this.setEndpoint({host, port, auth});
         this.eventSource = new EventEmitter();
 
@@ -30,7 +31,9 @@ export class RTSPWebsocketBackend {
 
     connect() {
         this.rtpproxy = null;
-        this.proxy = new WebSocketProxy(RTSP_CONFIG['websocket.url'], {host: this.host, port: this.port, auth:this.auth});
+        this.proxy = new WebSocketProxy(this.ws_url, {host: this.host, port: this.port, auth:this.auth});
+        console.log("ws_url is:"+this.ws_url);
+//        this.proxy = new WebSocketProxy(RTSP_CONFIG['websocket.url'], {host: this.host, port: this.port, auth:this.auth});
         this.proxy.set_message_handler((ev)=>{
             let item = this.response_queue.shift();
             item.resolve(ev.data);
@@ -50,7 +53,8 @@ export class RTSPWebsocketBackend {
             if (id==-1) {
                 throw new Error("failed to connect");
             }
-            this.rtpproxy = new WebSocketProxy(RTSP_CONFIG['websocket.url'], {sock_id: id});
+            this.rtpproxy = new WebSocketProxy(this.ws_url, {sock_id: id});
+//            this.rtpproxy = new WebSocketProxy(RTSP_CONFIG['websocket.url'], {sock_id: id});
             this.rtpproxy.set_message_handler((ev)=>{
                 let channel = new DataView(ev.data).getUint8(1);
                 if (this.rtp_channels.has(channel)) {
@@ -109,10 +113,12 @@ export class RTPError {
 
 export class RTSPConnection {
 
-    constructor(_host, _port=554, _uri, {login='', password=''}, backend) {
+    constructor( _ws_url ,_host, _port=554, _uri, {login='', password=''}, backend) {
         let auth = login?`${login}:${password}@`:'';
         this.url = `rtsp://${auth}${_host}:${_port}${_uri}`;
         this.requests = {};
+        this.ws_url = _ws_url;
+//        console.log("ws_url is:"+this.ws_url);
         this.host = _host;
         this.port = _port;
         this.login = login;
@@ -126,7 +132,7 @@ export class RTSPConnection {
     }
 
     connect() {
-        this._backend = new this.backend_constructor(this.host, this.port, {login: this.login, password: this.password});
+        this._backend = new this.backend_constructor(this.ws_url, this.host, this.port, {login: this.login, password: this.password});
         this.eventSource = this._backend.eventSource;
         this.cSeq = 0;
         return this._backend.ready;

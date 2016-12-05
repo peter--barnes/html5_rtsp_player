@@ -54,11 +54,12 @@
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-	rtsp.RTSP_CONFIG['websocket.url'] = "ws://127.0.0.1:9010/ws";
+	//rtsp.RTSP_CONFIG['websocket.url'] = "ws://127.0.0.1:9010/ws";
 
 	document.addEventListener("DOMContentLoaded", function () {
 	    setTimeout(function () {
-	        var player = rtsp.attach(document.getElementById('test_video0'));
+	        var ws_url = "ws://127.0.0.1:9010/ws";
+	        var player = rtsp.attach(document.getElementById('test_video0'), ws_url);
 	        if (!player.started()) {
 	            player.start();
 	        }
@@ -196,15 +197,18 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var RTSPPlayer = exports.RTSPPlayer = function () {
-	    function RTSPPlayer(player, url) {
+	    function RTSPPlayer(player, url, ws_url) {
 	        _classCallCheck(this, RTSPPlayer);
 
 	        this.player = player;
 	        this.url = url;
+	        this.ws_url = ws_url;
 	        this.isReplaced = url !== undefined;
 	        if (this.isReplaced) {
 	            var parsed = _url.Url.parse(url);
-	            this.connection = new _connection.RTSPConnection(parsed.host, parsed.port, parsed.urlpath, { login: parsed.user, password: parsed.pass }, _connection.RTSPWebsocketBackend);
+	            //this.ws_backend = new RTSPWebsocketBackend(this.ws_url);
+	            this.connection = new _connection.RTSPConnection(this.ws_url, parsed.host, parsed.port, parsed.urlpath, { login: parsed.user, password: parsed.pass }, _connection.RTSPWebsocketBackend);
+	            //            this.connection = new RTSPConnection(parsed.host, parsed.port, parsed.urlpath, {login: parsed.user, password: parsed.pass}, this.ws_backend);
 	            this.client = new _client.RTSPClientSM(this.connection, this.player);
 	        }
 	    }
@@ -260,9 +264,9 @@
 	    return RTSPPlayer;
 	}();
 
-	function attach(player) {
+	function attach(player, ws_url) {
 	    // if (player.networkState == HTMLMediaElement.NETWORK_NO_SOURCE) {
-	    var rtsp_player = new RTSPPlayer(player, player.getAttribute('src'));
+	    var rtsp_player = new RTSPPlayer(player, player.getAttribute('src'), ws_url);
 	    if (player.getAttribute('autoplay') !== null) {
 	        rtsp_player.start();
 	    }
@@ -4028,9 +4032,8 @@
 	});
 	exports.RTSPConnection = exports.RTPError = exports.RTSPWebsocketBackend = undefined;
 
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); //import {RTSP_CONFIG, MessageBuilder} from './../config';
 
-	var _config = __webpack_require__(3);
 
 	var _bp_logger = __webpack_require__(1);
 
@@ -4043,12 +4046,13 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var RTSPWebsocketBackend = exports.RTSPWebsocketBackend = function () {
-	    function RTSPWebsocketBackend(host, port, auth) {
+	    function RTSPWebsocketBackend(ws_url, host, port, auth) {
 	        _classCallCheck(this, RTSPWebsocketBackend);
 
 	        this.rtp_handler = function () {};
 	        this.response_queue = [];
 
+	        this.ws_url = ws_url;
 	        this.setEndpoint({ host: host, port: port, auth: auth });
 	        this.eventSource = new _bp_event.EventEmitter();
 
@@ -4082,7 +4086,9 @@
 	            var _this2 = this;
 
 	            this.rtpproxy = null;
-	            this.proxy = new _websocket_proxy.WebSocketProxy(_config.RTSP_CONFIG['websocket.url'], { host: this.host, port: this.port, auth: this.auth });
+	            this.proxy = new _websocket_proxy.WebSocketProxy(this.ws_url, { host: this.host, port: this.port, auth: this.auth });
+	            console.log("ws_url is:" + this.ws_url);
+	            //        this.proxy = new WebSocketProxy(RTSP_CONFIG['websocket.url'], {host: this.host, port: this.port, auth:this.auth});
 	            this.proxy.set_message_handler(function (ev) {
 	                var item = _this2.response_queue.shift();
 	                item.resolve(ev.data);
@@ -4102,7 +4108,8 @@
 	                if (id == -1) {
 	                    throw new Error("failed to connect");
 	                }
-	                _this2.rtpproxy = new _websocket_proxy.WebSocketProxy(_config.RTSP_CONFIG['websocket.url'], { sock_id: id });
+	                _this2.rtpproxy = new _websocket_proxy.WebSocketProxy(_this2.ws_url, { sock_id: id });
+	                //            this.rtpproxy = new WebSocketProxy(RTSP_CONFIG['websocket.url'], {sock_id: id});
 	                _this2.rtpproxy.set_message_handler(function (ev) {
 	                    var channel = new DataView(ev.data).getUint8(1);
 	                    if (_this2.rtp_channels.has(channel)) {
@@ -4172,22 +4179,24 @@
 	;
 
 	var RTSPConnection = exports.RTSPConnection = function () {
-	    function RTSPConnection(_host) {
-	        var _port = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 554;
+	    function RTSPConnection(_ws_url, _host) {
+	        var _port = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 554;
 
-	        var _uri = arguments[2];
-	        var _ref2 = arguments[3];
+	        var _uri = arguments[3];
+	        var _ref2 = arguments[4];
 	        var _ref2$login = _ref2.login,
 	            login = _ref2$login === undefined ? '' : _ref2$login,
 	            _ref2$password = _ref2.password,
 	            password = _ref2$password === undefined ? '' : _ref2$password;
-	        var backend = arguments[4];
+	        var backend = arguments[5];
 
 	        _classCallCheck(this, RTSPConnection);
 
 	        var auth = login ? login + ':' + password + '@' : '';
 	        this.url = 'rtsp://' + auth + _host + ':' + _port + _uri;
 	        this.requests = {};
+	        this.ws_url = _ws_url;
+	        //        console.log("ws_url is:"+this.ws_url);
 	        this.host = _host;
 	        this.port = _port;
 	        this.login = login;
@@ -4199,7 +4208,7 @@
 	    _createClass(RTSPConnection, [{
 	        key: 'connect',
 	        value: function connect() {
-	            this._backend = new this.backend_constructor(this.host, this.port, { login: this.login, password: this.password });
+	            this._backend = new this.backend_constructor(this.ws_url, this.host, this.port, { login: this.login, password: this.password });
 	            this.eventSource = this._backend.eventSource;
 	            this.cSeq = 0;
 	            return this._backend.ready;
@@ -4232,7 +4241,7 @@
 	        value: function parse(_data) {
 	            _bp_logger.Log.debug(_data);
 	            var d = _data.split('\r\n\r\n');
-	            var parsed = _config.MessageBuilder.parse(d[0]);
+	            var parsed = MessageBuilder.parse(d[0]);
 	            var len = Number(parsed.headers['content-length']);
 	            if (len) {
 	                var _d = _data.split('\r\n\r\n');
@@ -4257,7 +4266,7 @@
 	            if (_host != '*') {
 	                // TODO: add auth header
 	            }
-	            return this.send(this.cSeq, _config.MessageBuilder.build(_cmd, _host, _params, _payload));
+	            return this.send(this.cSeq, MessageBuilder.build(_cmd, _host, _params, _payload));
 	        }
 	    }, {
 	        key: 'send',

@@ -5,13 +5,16 @@ import {RTSPConnection} from './rtsp/connection';
 import {Url} from './util/url';
 
 export class RTSPPlayer {
-    constructor(player, url) {
+    constructor(player, url, ws_url) {
         this.player = player;
         this.url = url;
+        this.ws_url = ws_url;
         this.isReplaced = url!==undefined;
         if (this.isReplaced) {
             let parsed = Url.parse(url);
-            this.connection = new RTSPConnection(parsed.host, parsed.port, parsed.urlpath, {login: parsed.user, password: parsed.pass}, RTSPWebsocketBackend);
+            //this.ws_backend = new RTSPWebsocketBackend(this.ws_url);
+            this.connection = new RTSPConnection(this.ws_url ,parsed.host, parsed.port, parsed.urlpath, {login: parsed.user, password: parsed.pass}, RTSPWebsocketBackend);
+//            this.connection = new RTSPConnection(parsed.host, parsed.port, parsed.urlpath, {login: parsed.user, password: parsed.pass}, this.ws_backend);
             this.client = new RTSPClientSM(this.connection, this.player);
         }
 
@@ -57,9 +60,9 @@ export class RTSPPlayer {
         }
     }
 }
-export function attach(player) {
+export function attach(player, ws_url) {
     // if (player.networkState == HTMLMediaElement.NETWORK_NO_SOURCE) {
-        let rtsp_player = new RTSPPlayer(player, player.getAttribute('src'));
+        let rtsp_player = new RTSPPlayer(player, player.getAttribute('src'), ws_url);
         if (player.getAttribute('autoplay') !== null) {
             rtsp_player.start();
         }
